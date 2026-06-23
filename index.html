@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò chơi: Ai là chuyên gia tâm lý?</title>
+    <style>
+        :root {
+            --bg-color: #FFF9F2;
+            --primary-color: #FF8A8A;
+            --secondary-color: #FFD3B6;
+            --correct-color: #A8E6CF;
+            --wrong-color: #FFAAA5;
+            --text-color: #4A4A4A;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            text-align: center;
+            border: 3px solid var(--secondary-color);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        /* Màn hình chọn câu hỏi (Dashboard) */
+        .grid-questions {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn-box {
+            background-color: var(--secondary-color);
+            color: #d87a56;
+            border: none;
+            padding: 25px 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .btn-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-box.opened {
+            background-color: #E0E0E0;
+            color: #999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Khung hiển thị câu hỏi vùng Pop-up/Ẩn hiện */
+        .quiz-zone {
+            display: none;
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 15px;
+            background-color: #FFFef9;
+            border: 2px dashed var(--primary-color);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            text-align: left;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct-color) !important;
+            border-color: #72cfae;
+            font-weight: bold;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong-color) !important;
+            border-color: #ff7870;
+        }
+
+        .control-btns {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btn-nav {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Màn hình chúc mừng kết thúc */
+        .end-game {
+            display: none;
+            animation: popIn 0.5s ease;
+        }
+
+        .trophy {
+            font-size: 5rem;
+            animation: bounce 1s infinite alternate;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>👑 AI LÀ CHUYÊN GIA TÂM LÝ?</h1>
+    <p class="subtitle">Hãy chọn một ô số tương ứng với thử thách tình huống gia đình!</p>
+
+    <!-- Màn hình chọn câu hỏi -->
+    <div id="dashboard">
+        <div class="grid-questions">
+            <button class="btn-box" onclick="openQuestion(0, this)">1</button>
+            <button class="btn-box" onclick="openQuestion(1, this)">2</button>
+            <button class="btn-box" onclick="openQuestion(2, this)">3</button>
+            <button class="btn-box" onclick="openQuestion(3, this)">4</button>
+            <button class="btn-box" onclick="openQuestion(4, this)">5</button>
+        </div>
+    </div>
+
+    <!-- Vùng hiển thị câu hỏi chi tiết -->
+    <div id="quiz-zone" class="quiz-zone">
+        <div id="question-text" class="question-text">Nội dung câu hỏi sẽ hiển thị ở đây?</div>
+        <div class="options-container" id="options-container">
+            <!-- Các nút đáp án sẽ được tự động render ở đây -->
+        </div>
+        <div class="control-btns">
+            <button class="btn-nav" style="background-color: #6c757d;" onclick="backToDashboard()">Quay lại bảng số</button>
+            <button class="btn-nav" id="btn-next" onclick="checkEndGame()" style="display: none;">Tiếp tục cuộc chơi</button>
+        </div>
+    </div>
+
+    <!-- Màn hình kết thúc trò chơi -->
+    <div id="end-game" class="end-game">
+        <div class="trophy">🏆</div>
+        <h2>Chúc mừng các Chuyên gia Tâm lý nhí!</h2>
+        <p>Chúng ta đã xuất sắc vượt qua toàn bộ thử thách tình huống. Hãy luôn yêu thương, lắng nghe và vun đắp cho ngôi nhà của mình mỗi ngày nhé! ❤️</p>
+        <button class="btn-nav" onclick="resetGame()" style="margin-top: 20px;">Chơi lại từ đầu</button>
+    </div>
+</div>
+
+<script>
+    // Dữ liệu 5 câu hỏi trắc nghiệm tương tác
+    const quizData = [
+        {
+            question: "Câu 1: Nguyên nhân chính dẫn đến những cuộc tranh cãi giữa cha mẹ và con cái tuổi mới lớn thường là do đâu?",
+            options: [
+                { text: "A. Do cha mẹ không còn yêu thương con cái nhiều như trước.", isCorrect: false },
+                { text: "B. Do khoảng cách thế hệ, sự bất đồng quan điểm sống và chưa biết cách lắng nghe nhau.", isCorrect: true }
+            ]
+        },
+        {
+            question: "Câu 2: 'Bố mẹ đi làm vất vả cả ngày, về nhà chỉ cần chu cấp đầy đủ tiền bạc cho con là đủ thể hiện tình yêu thương.' Nhận định này Đúng hay Sai?",
+            options: [
+                { text: "A. Đúng. Tiền bạc mua được mọi sự thoải mái cho con cái.", isCorrect: false },
+                { text: "B. Sai. Mối quan hệ cần thời gian chia sẻ chất lượng, tiền bạc không thay thế được tình cảm.", isCorrect: true }
+            ]
+        },
+        {
+            question: "Câu 3: Kết quả lâu dài của một gia đình thường xuyên xảy ra tình trạng bạo lực ngôn từ (mắng chửi, hạ thấp nhau) là gì?",
+            options: [
+                { text: "A. Giúp con cái trở nên mạnh mẽ, chai sạn và dễ trưởng thành hơn trong đời.", isCorrect: false },
+                { text: "B. Khiến con cái tổn thương tâm lý sâu sắc, trở nên tự ti cô độc hoặc dễ nổi loạn.", isCorrect: true }
+            ]
+        },
+        {
+            question: "Câu 4: Khi xảy ra bất đồng ý kiến sâu sắc với bố mẹ, cách ứng xử nào sau đây là văn minh và mang lại kết quả tốt nhất?",
+            options: [
+                { text: "A. Đóng chặt cửa phòng, im lặng biểu tình hoặc bỏ ăn để gây áp lực.", isCorrect: false },
+                { text: "B. Chờ khi cả hai bên bình tĩnh, chủ động nói chuyện lễ phép để bày tỏ góc nhìn cá nhân.", isCorrect: true }
+            ]
+        },
+        {
+            question: "Câu 5: Để gieo 'hạt mầm tích cực', gặt hái 'quả ngọt' hạnh phúc cho gia đình, trách nhiệm thuộc về ai?",
+            options: [
+                { text: "A. Chỉ có bố mẹ, vì bố mẹ là người nuôi nấng và làm chủ gia đình.", isCorrect: false },
+                { text: "B. Tất cả các thành viên, bao gồm cả sự hợp tác, biết ơn và chia sẻ từ con cái.", isCorrect: true }
+            ]
+        }
+    ];
+
+    let openedCount = 0;
+
+    function openQuestion(index, buttonElement) {
+        if(buttonElement.classList.contains('opened')) return;
+        
+        // Đánh dấu ô số đã mở
+        buttonElement.classList.add('opened');
+        openedCount++;
+
+        // Ẩn bảng chọn, hiện vùng câu hỏi
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('quiz-zone').style.display = 'block';
+        document.getElementById('btn-next').style.display = 'none';
+
+        // Đổ dữ liệu câu hỏi
+        const currentQuiz = quizData[index];
+        document.getElementById('question-text').innerText = currentQuiz.question;
+
+        // Đổ dữ liệu đáp án
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = ''; // reset cũ
+
+        currentQuiz.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = function() {
+                // Khóa không cho click nút khác sau khi đã chọn
+                const allButtons = optionsContainer.querySelectorAll('.option-btn');
+                allButtons.forEach(b => b.disabled = true);
+                
+                // Hiển thị màu sắc đúng/sai
+                if(opt.isCorrect) {
+                    btn.classList.add('correct');
+                } else {
+                    btn.classList.add('wrong');
+                    // Vẫn làm sáng đáp án đúng lên cho học sinh nhận diện
+                    allButtons.forEach((b, i) => {
+                        if(currentQuiz.options[i].isCorrect) b.classList.add('correct');
+                    });
+                }
+                // Hiện nút đi tiếp
+                document.getElementById('btn-next').style.display = 'block';
+            };
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function backToDashboard() {
+        document.getElementById('quiz-zone').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+    }
+
+    function checkEndGame() {
+        if(openedCount === 5) {
+            document.getElementById('quiz-zone').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('end-game').style.display = 'block';
+            document.querySelector('.subtitle').style.display = 'none';
+        } else {
+            backToDashboard();
+        }
+    }
+
+    function resetGame() {
+        openedCount = 0;
+        document.getElementById('end-game').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.querySelector('.subtitle').style.display = 'block';
+        
+        // Reset lại các ô số
+        const boxes = document.querySelectorAll('.btn-box');
+        boxes.forEach(box => box.classList.remove('opened'));
+    }
+</script>
+
+</body>
+</html>
